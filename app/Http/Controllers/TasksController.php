@@ -17,16 +17,42 @@ class TasksController extends Controller
 
     public function index($user)
     {
-        $user = User::findOrFail($user);
-        $tasks = Task::whereIn('user_id', $user)->with('user')->latest();
+//        soj: 查找看 laravel 啟動，include 多少檔案
+//        return count(get_included_files());
+//        soj:
+//        variable $user 是從哪來的？
+//        命名要改 $userId
+//        soj:
+//        可以不用找出 $user (Model)?
+//        $tasks = Task::where('user_id', $user)->latest()->get();
+        $user = User::findOrFail($user); // User Model
+//        dd();
+//        ddd();
+
+        // database : 1. sql query, 2. query builder 3. eloquent builder （base on query builder)
+
+//        User::find($userId);
+//        User::where('id', $userId)->where(...)->get(); // 有 get() => model, 沒有 get() => builder
+        // where :  select ... where ...，update table values() where ... and，delete
+        // collection
+//        soj:
+//        可以不用 with user
+        $tasks = Task::whereIn('user_id', $user)->with('user')->latest()->get(); //collection
+//        $tasks = Task::whereIn('user_id', [$user, 2, 3])->with('user')->latest(); // Query Builder
+        // where in 後面是放 array， where 後面是放單一值
 
 //        $this->authorize('viewAny', Task::class);
-        return view('home', compact('tasks','user'));
+//        soj:
+//        同上，可以不用 load users relationship table
+
+        return view('home', compact('user'));
 
     }
 
     public function store()
     {
+//        soj:
+//        request body 命名原則 task-name => task_name or taskName
         $data = request()->validate([
             'task-name' => 'required',
         ]);
@@ -38,6 +64,7 @@ class TasksController extends Controller
         return redirect('/user/' . auth()->user()->id);
     }
 
+    //php type hint
     public function edit(Task $task)
     {
 //        $user = Auth::user();
@@ -46,17 +73,24 @@ class TasksController extends Controller
         return view('edit', compact('task'));
     }
 
-    public function update($task_id)
+    public function update(\Illuminate\Http\Request $request, $task_id)
     {
         $task = Task::find($task_id);
         $this->authorize('update', $task);
 
-        $data = request()->validate([
+        // request() helper function
+        // marco()
+//        request()->validate();
+        $validated = $this->validate($request, [
             'task-name' => 'required',
         ]);
 
+        // input name , database column name 一致
+
+        $task->update($validated);
+
         $task->update([
-            'taskName' => $data['task-name'],
+            'taskName' => $validated['task-name'],
         ]);
 
         return redirect('/user/' . auth()->user()->id);
@@ -68,7 +102,9 @@ class TasksController extends Controller
         $this->authorize('update', $task);
 
         $task->update([
-            'flag' => 1,
+//            soj
+//            value 應該填 true
+            'flag' => true,
         ]);
 
         return back();

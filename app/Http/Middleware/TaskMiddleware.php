@@ -20,8 +20,14 @@ class TaskMiddleware
     {
         $userID = $request->route('user');
         if ($userID == Auth::id()) {
+            // before middleware
             return $next($request);
+
+            // after middleware
+//            $response = $next($request);
+//            // do something
+//            return $response;
         }
-        return abort(403);
+        return abort(Response::HTTP_FORBIDDEN);
     }
 }
